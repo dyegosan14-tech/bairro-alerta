@@ -1,0 +1,102 @@
+# ==============================================================================
+# GitLab CI/CD Pipeline - Voz do Bairro
+# ==============================================================================
+image: node:20-alpine
+
+stages:
+  - lint
+  - test
+  - build
+  - containerize
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  NODE_ENV: test
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .npm/
+    - backend/node_modules/
+    - frontend/node_modules/
+
+# ------------------------------------------------------------------------------
+# 1. Stage: Lint & Code Quality
+# ------------------------------------------------------------------------------
+lint:backend:
+  stage: lint
+  script:
+    - cd backend
+    - npm ci --cache ../.npm --prefer-offline
+    - npm run lint || true
+
+lint:frontend:
+  stage: lint
+  script:
+    - cd frontend
+    - npm ci --cache ../.npm --prefer-offline
+    - npm run lint || true
+
+# ------------------------------------------------------------------------------
+# 2. Stage: Automated Unit & Integration Tests
+# ------------------------------------------------------------------------------
+test:backend:
+  stage: test
+  services:
+    - name: postgis/postgis:16-3.4
+      alias: postgres
+  variables:
+    POSTGRES_USER: voz_user
+    POSTGRES_PASSWORD: voz_secret_password
+    POSTGRES_DB: voz_do_bairro_test
+    DATABASE_URL: postgresql://voz_user:voz_secret_password@postgres:5432/voz_do_bairro_test
+    JWT_SECRET: ci_test_secret_jwt_key_1234567890
+  script:
+    - cd backend
+    - npm ci --cache ../.npm --prefer-offline
+    - npm run test
+
+# ------------------------------------------------------------------------------
+# 3. Stage: Build Artifacts
+# ------------------------------------------------------------------------------
+build:backend:
+  stage: build
+  script:
+    - cd backend
+    - npm ci --cache ../.npm --prefer-offline
+    - npm run build
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - backend/dist/
+
+build:frontend:
+  stage: build
+  script:
+    - cd frontend
+    - npm ci --cache ../.npm --prefer-offline
+    - npm run build
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - frontend/dist/
+
+# ------------------------------------------------------------------------------
+# 4. Stage: Docker Container Build & Registry Push (main branch)
+# ------------------------------------------------------------------------------
+docker:build:
+  stage: containerize
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  only:
+    - main
+    - master
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA ./backend
+    - docker build -t $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA ./frontend
+    - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
