@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output
+
+# Production / Builds
+dist/
+build/
+.output/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pino.log
+logs/
+
+# Uploads
+uploads/
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# IDE / Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# OS generated
+Thumbs.db
+ehthumbs.db
+
+# Docker volumes / data
+pgdata/

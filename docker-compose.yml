@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Banco de Dados Relacional com PostGIS (Extensão Geoespacial)
+  # ============================================================================
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: voz_do_bairro_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: voz_user
+      POSTGRES_PASSWORD: voz_secret_password
+      POSTGRES_DB: voz_do_bairro
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/src/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voz_user -d voz_do_bairro"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - voz_network
+
+  # ============================================================================
+  # Backend API (Node.js + Fastify + TypeScript + Swagger)
+  # ============================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: voz_do_bairro_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://voz_user:voz_secret_password@postgres:5432/voz_do_bairro
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: voz_user
+      DB_PASSWORD: voz_secret_password
+      DB_NAME: voz_do_bairro
+      JWT_SECRET: super_secret_jwt_key_voz_do_bairro_change_in_production_2026_xYz
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: http://localhost:3000
+      UPLOAD_DIR: ./uploads
+    ports:
+      - "3001:3001"
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - voz_network
+
+  # ============================================================================
+  # Frontend Web App (React + TypeScript + Tailwind + Leaflet)
+  # ============================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: voz_do_bairro_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_URL=http://localhost:3001/api/v1
+    depends_on:
+      - backend
+    networks:
+      - voz_network
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  voz_network:
+    driver: bridge
