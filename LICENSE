@@ -1,26 +1,420 @@
-Voz do Bairro
+VOZ DO BAIRRO
+AVISO DE DIREITOS AUTORAIS E LICENÇA PROPRIETÁRIA
 
-Desenvolvido por Dyego Santos
-GitHub: https://github.com/dyegosan14-tech
+Copyright © 2026 Dyego Santos.
+Todos os direitos reservados.
 
-MIT License
+Titular e desenvolvedor:
+Dyego Santos
 
-Copyright (c) 2026 Dyego Santos
+GitHub:
+https://github.com/dyegosan14-tech
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the “Software”), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Contato para solicitação de uso:
+Dyegosan14@gmail.com
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+1. TITULARIDADE
+
+O software denominado “Voz do Bairro”, incluindo, sem limitação, seu
+código-fonte, código compilado, arquitetura, estrutura, documentação,
+interfaces, elementos gráficos originais, modelos de banco de dados,
+scripts, configurações, textos, marcas, nomes, logotipos e demais
+componentes originais, é protegido pela legislação brasileira aplicável
+à propriedade intelectual e aos direitos autorais.
+
+Salvo quando expressamente indicado de forma diferente, os direitos
+patrimoniais sobre os componentes originais deste projeto pertencem a
+Dyego Santos.
+
+Esta declaração não reivindica propriedade sobre bibliotecas,
+dependências, ferramentas, códigos de terceiros, dados públicos ou
+outros materiais utilizados pelo projeto que possuam titulares ou
+licenças próprias.
+
+
+2. AUSÊNCIA DE AUTORIZAÇÃO AUTOMÁTICA
+
+A disponibilização, publicação, visualização ou acesso a este projeto,
+inclusive por meio de repositório público, não concede autorização
+automática para sua utilização.
+
+Nenhuma licença de uso, reprodução, modificação, distribuição,
+publicação, exploração comercial ou criação de obra derivada é
+concedida sem autorização prévia, expressa e por escrito do titular.
+
+
+3. ATOS PROIBIDOS
+
+Sem autorização prévia, expressa e por escrito do titular, é proibido:
+
+a) utilizar ou executar o software, integral ou parcialmente, para fins
+pessoais, acadêmicos, institucionais, governamentais ou comerciais;
+
+b) copiar, reproduzir, baixar, compilar, modificar, adaptar, traduzir,
+corrigir, transformar ou criar trabalhos derivados;
+
+c) distribuir, publicar, compartilhar, vender, alugar, sublicenciar,
+ceder, transferir ou disponibilizar o software a terceiros;
+
+d) hospedar, implantar ou disponibilizar o software como site,
+aplicativo, plataforma, serviço, API, produto SaaS ou solução interna;
+
+e) remover, ocultar ou alterar avisos de autoria, direitos autorais,
+titularidade ou identificação do desenvolvedor;
+
+f) apresentar o projeto ou parte dele como sendo de autoria própria;
+
+g) utilizar o código, a arquitetura, a documentação, os elementos
+visuais ou outros componentes originais na criação de produto
+concorrente ou derivado;
+
+h) utilizar o projeto para treinamento, avaliação ou desenvolvimento de
+modelos de inteligência artificial sem autorização específica;
+
+i) registrar domínio, marca, nome empresarial, aplicativo ou produto
+que reproduza ou possa ser confundido com a identidade “Voz do Bairro”;
+
+j) praticar engenharia reversa, descompilação ou desmontagem, ressalvadas
+as hipóteses expressamente permitidas por legislação obrigatória.
+
+
+4. SOLICITAÇÃO DE AUTORIZAÇÃO
+
+Qualquer pessoa física ou jurídica interessada em utilizar este projeto
+deverá solicitar autorização ao titular por meio do contato informado
+neste documento.
+
+A solicitação não representa autorização automática.
+
+O uso somente será permitido após o interessado receber autorização
+expressa e por escrito do titular. A autorização deverá identificar,
+sempre que aplicável:
+
+a) a pessoa física ou jurídica autorizada;
+b) a finalidade permitida;
+c) os componentes que poderão ser utilizados;
+d) o prazo da autorização;
+e) o território;
+f) a possibilidade ou proibição de modificação;
+g) a possibilidade ou proibição de uso comercial;
+h) o valor e as condições de pagamento, quando aplicáveis;
+i) as regras de atribuição de autoria;
+j) as condições de encerramento e revogação.
+
+Autorizações verbais, silêncio, tolerância ou ausência de oposição
+imediata não serão considerados concessão de licença.
+
+
+5. AUTORIZAÇÃO PESSOAL E LIMITADA
+
+Salvo disposição expressa em contrato escrito, qualquer autorização
+concedida será pessoal, limitada, temporária, revogável, intransferível
+e não exclusiva.
+
+A autorização não permitirá sublicenciamento, cessão, transferência,
+redistribuição ou disponibilização do projeto a terceiros.
+
+
+6. VIOLAÇÃO DOS DIREITOS
+
+A utilização não autorizada do projeto poderá caracterizar violação de
+direitos autorais e de direitos relativos a programa de computador.
+
+O titular poderá adotar as medidas extrajudiciais e judiciais cabíveis,
+incluindo, quando aplicável:
+
+a) envio de notificação extrajudicial;
+b) solicitação de remoção do conteúdo ou serviço;
+c) comunicação à plataforma de hospedagem;
+d) pedido judicial de interrupção da utilização;
+e) pedido de apreensão de cópias não autorizadas;
+f) pedido de preservação e apresentação de provas;
+g) pedido de indenização por perdas e danos;
+h) cobrança dos valores obtidos com a exploração não autorizada;
+i) comunicação às autoridades competentes quando houver indícios de
+infração penal;
+j) outras medidas previstas na legislação aplicável.
+
+A ausência de ação imediata contra determinada violação não representa
+renúncia aos direitos do titular.
+
+
+7. PRESERVAÇÃO DAS PROVAS
+
+O titular poderá manter registros técnicos e documentais destinados à
+comprovação de autoria, titularidade, desenvolvimento e violações,
+incluindo histórico de versões, commits, assinaturas digitais, arquivos
+originais, registros de acesso, datas de publicação e comunicações.
+
+A coleta e a utilização dessas informações deverão observar a
+legislação aplicável, incluindo as normas de proteção de dados pessoais.
+
+
+8. DENÚNCIAS E REMOÇÃO
+
+Plataformas, provedores e terceiros que receberem comunicação sobre uma
+possível utilização não autorizada deverão preservar as informações
+pertinentes e avaliar a remoção ou suspensão do conteúdo de acordo com
+a legislação e com seus próprios termos de serviço.
+
+
+9. COMPONENTES DE TERCEIROS
+
+Bibliotecas, frameworks, imagens, fontes, dados, dependências e outros
+componentes pertencentes a terceiros continuam sujeitos às respectivas
+licenças e condições.
+
+Esta licença proprietária aplica-se exclusivamente aos componentes
+originais pertencentes ao titular e não modifica licenças de terceiros.
+
+
+10. AUSÊNCIA DE GARANTIAS
+
+ESTE SOFTWARE É FORNECIDO “NO ESTADO EM QUE SE ENCONTRA”, SEM GARANTIAS
+EXPRESSAS OU IMPLÍCITAS DE FUNCIONAMENTO, ADEQUAÇÃO, DISPONIBILIDADE,
+SEGURANÇA, COMERCIALIZAÇÃO OU ATENDIMENTO A UMA FINALIDADE ESPECÍFICA.
+
+NA MÁXIMA EXTENSÃO PERMITIDA PELA LEGISLAÇÃO, O TITULAR NÃO SERÁ
+RESPONSÁVEL POR DANOS, PREJUÍZOS, INTERRUPÇÕES, PERDAS DE DADOS OU
+LUCROS CESSANTES DECORRENTES DO ACESSO OU DA UTILIZAÇÃO NÃO AUTORIZADA
+DO SOFTWARE.
+
+
+11. LEGISLAÇÃO APLICÁVEL
+
+Este documento será interpretado de acordo com a legislação da
+República Federativa do Brasil, especialmente a Lei nº 9.609, de
+19 de fevereiro de 1998, e a Lei nº 9.610, de 19 de fevereiro de 1998,
+sem prejuízo das demais normas aplicáveis e das regras legais de
+competência jurisdicional.
+
+
+12. DISPOSIÇÕES FINAIS
+
+Se alguma disposição deste documento for considerada inválida,
+ineficaz ou inexequível, as demais disposições permanecerão em vigor.
+
+Qualquer licença, cessão, parceria, contratação ou autorização relativa
+ao projeto deverá ser formalizada em documento próprio e assinado pelas
+partes.
+
+A simples inclusão do nome de uma pessoa na lista de colaboradores não
+representa automaticamente cessão dos direitos patrimoniais sobre suas
+contribuições. As contribuições de terceiros deverão possuir autorização
+ou instrumento específico de cessão ou licenciamento.
+
+Nenhum direito é concedido além daqueles expressamente estabelecidos
+por autorização ou contrato escrito.
+
+Última atualização: 11 de setembro de 2026.
+
+
+==============================================================================
+ENGLISH VERSION / VERSÃO EM INGLÊS
+==============================================================================
+
+VOZ DO BAIRRO
+COPYRIGHT NOTICE AND PROPRIETARY LICENSE
+
+Copyright © 2026 Dyego Santos.
+All rights reserved.
+
+Owner and developer:
+Dyego Santos
+
+GitHub:
+https://github.com/dyegosan14-tech
+
+Contact for usage requests:
+Dyegosan14@gmail.com
+
+
+1. OWNERSHIP
+
+The software designated as "Voz do Bairro", including, without limitation, its
+source code, compiled code, architecture, structure, documentation,
+interfaces, original graphic elements, database schemas, scripts,
+configurations, texts, trademarks, names, logos, and all other original
+components, is protected by applicable intellectual property and copyright
+laws.
+
+Unless expressly stated otherwise, all economic and proprietary rights in the
+original components of this project belong exclusively to Dyego Santos.
+
+This declaration makes no claim of ownership over libraries, dependencies,
+tools, third-party code, public data, or other materials utilized by the
+project that possess their own owners or licenses.
+
+
+2. NO AUTOMATIC AUTHORIZATION
+
+The availability, publication, viewing, or access to this project, including
+through a public repository, does not grant automatic authorization for its use.
+
+No license for use, reproduction, modification, distribution, publication,
+commercial exploitation, or creation of derivative works is granted without
+the prior, express, and written authorization of the copyright owner.
+
+
+3. PROHIBITED ACTS
+
+Without the prior, express, and written authorization of the copyright owner,
+it is strictly prohibited to:
+
+a) use or execute the software, in whole or in part, for personal, academic,
+institutional, governmental, or commercial purposes;
+
+b) copy, reproduce, download, compile, modify, adapt, translate, correct,
+transform, or create derivative works;
+
+c) distribute, publish, share, sell, rent, sub-license, assign, transfer, or
+make the software available to third parties;
+
+d) host, deploy, or make the software available as a website, application,
+platform, service, API, SaaS product, or internal solution;
+
+e) remove, obscure, or alter notices of authorship, copyright, ownership, or
+developer identification;
+
+f) present the project or any part thereof as one's own creation;
+
+g) use the code, architecture, documentation, visual elements, or other
+original components in the creation of a competing or derivative product;
+
+h) use the project for the training, evaluation, or development of artificial
+intelligence models without specific authorization;
+
+i) register any domain, trademark, business name, application, or product that
+reproduces or may be confused with the "Voz do Bairro" identity;
+
+j) engage in reverse engineering, decompilation, or disassembly, except in
+circumstances expressly permitted by mandatory applicable law.
+
+
+4. REQUEST FOR AUTHORIZATION
+
+Any individual or legal entity interested in using this project must request
+authorization from the owner through the contact provided in this document.
+
+Submitting a request does not constitute automatic authorization.
+
+Use will only be permitted after the interested party receives express, written
+authorization from the copyright owner. The authorization must specify, where
+applicable:
+
+a) the authorized individual or legal entity;
+b) the permitted purpose;
+c) the specific components that may be used;
+d) the duration of the authorization;
+e) the geographical territory;
+f) permission or prohibition of modification;
+g) permission or prohibition of commercial use;
+h) fees and payment conditions, when applicable;
+i) rules for attribution of authorship;
+j) terms for termination and revocation.
+
+Verbal authorizations, silence, tolerance, or lack of immediate opposition
+shall not be construed as the granting of a license.
+
+
+5. PERSONAL AND LIMITED AUTHORIZATION
+
+Unless expressly provided otherwise in a written contract, any authorization
+granted shall be personal, limited, temporary, revocable, non-transferable,
+and non-exclusive.
+
+The authorization shall not allow sublicensing, assignment, transfer,
+redistribution, or making the project available to third parties.
+
+
+6. INFRINGEMENT OF RIGHTS
+
+Unauthorized use of the project may constitute an infringement of copyright
+and software protection laws.
+
+The copyright owner may adopt all applicable extrajudicial and legal measures,
+including, where relevant:
+
+a) dispatching cease-and-desist or extrajudicial notifications;
+b) requesting the removal of content or services (DMCA / takedown);
+c) notifying the hosting platform;
+d) judicial injunctions to halt unauthorized use;
+e) judicial seizure of unauthorized copies;
+f) requests for the preservation and production of evidence;
+g) claims for indemnification, damages, and lost profits;
+h) disgorgement of revenues derived from unauthorized exploitation;
+i) reporting to competent authorities where there is evidence of criminal
+offenses;
+j) any other measures provided under applicable legislation.
+
+Failure to take immediate action against a particular violation does not
+constitute a waiver of the owner's rights.
+
+
+7. PRESERVATION OF EVIDENCE
+
+The copyright owner may maintain technical and documentary records intended to
+prove authorship, ownership, development, and infringements, including version
+history, commits, digital signatures, original files, access logs, publication
+dates, and communications.
+
+The collection and use of such information shall comply with applicable law,
+including personal data protection regulations.
+
+
+8. REPORTS AND TAKEDOWN
+
+Platforms, hosting providers, and third parties that receive notification of
+suspected unauthorized use must preserve relevant information and evaluate the
+removal or suspension of the content in accordance with applicable legislation
+and their respective terms of service.
+
+
+9. THIRD-PARTY COMPONENTS
+
+Libraries, frameworks, images, fonts, data, dependencies, and other components
+belonging to third parties remain subject to their respective licenses and terms.
+
+This proprietary license applies exclusively to the original components
+belonging to the copyright owner and does not alter third-party licenses.
+
+
+10. DISCLAIMER OF WARRANTIES
+
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AVAILABILITY, SECURITY, OR NON-INFRINGEMENT.
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE COPYRIGHT OWNER SHALL
+NOT BE LIABLE FOR ANY DAMAGES, LOSSES, DISRUPTIONS, LOSS OF DATA, OR LOST
+PROFITS ARISING OUT OF UNAUTHORIZED ACCESS OR USE OF THE SOFTWARE.
+
+
+11. APPLICABLE LAW
+
+This document shall be governed by and construed in accordance with the laws
+of the Federative Republic of Brazil, particularly Law No. 9,609 of February 19,
+1998 (Software Law), and Law No. 9,610 of February 19, 1998 (Copyright Law),
+without prejudice to other applicable rules and jurisdictional conflict-of-law
+principles.
+
+
+12. GENERAL PROVISIONS
+
+If any provision of this document is held to be invalid, void, or
+unenforceable, the remaining provisions shall remain in full force and effect.
+
+Any license, assignment, partnership, engagement, or authorization concerning
+the project must be formalized in a dedicated written document signed by the
+parties.
+
+The mere inclusion of a person's name in a contributor list does not
+automatically represent an assignment of economic rights over their
+contributions. Third-party contributions must have specific authorization,
+assignment, or licensing instruments.
+
+No rights are granted beyond those expressly established by written
+authorization or contract.
+
+Last updated: September 11, 2026.
