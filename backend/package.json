@@ -7,10 +7,13 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
     "start": "node dist/server.js",
     "migrate": "tsx src/database/migrate.ts",
     "seed": "tsx src/database/seed.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
@@ -30,13 +33,17 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@eslint/js": "^9.9.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.14.9",
     "@types/pg": "^8.11.6",
     "@types/supertest": "^6.0.2",
+    "@vitest/coverage-v8": "^1.6.0",
+    "eslint": "^9.9.0",
     "supertest": "^7.0.0",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3",
+    "typescript-eslint": "^8.3.0",
     "vitest": "^1.6.0"
   },
   "engines": {

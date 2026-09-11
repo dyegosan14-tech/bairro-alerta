@@ -1,7 +1,8 @@
-import { query } from '../../database/pool.js';
+import { query, withTransaction } from '../../database/pool.js';
 import { Incident, IncidentImage, IncidentComment } from '../../types/index.js';
 import { CreateIncidentInput, ListIncidentsQuery } from './incidents.schema.js';
 import { AuditService } from '../audit/audit.service.js';
+import { escapeLikePattern } from '../../utils/sql.js';
 
 export class IncidentsService {
   static async create(
@@ -11,51 +12,64 @@ export class IncidentsService {
     input: CreateIncidentInput,
     ipAddress?: string
   ): Promise<Incident> {
-    // 1. Inserir ocorrência com geometria PostGIS (Longitude, Latitude)
-    const res = await query(`
-      INSERT INTO incidents (
-        user_id, category_id, title, description,
-        location, address_text, neighborhood, city, state,
-        priority, status
-      ) VALUES (
-        $1, $2, $3, $4,
-        ST_SetSRID(ST_MakePoint($5, $6), 4326),
-        $7, $8, $9, $10,
-        $11, 'PENDING'
-      )
-      RETURNING 
-        id, user_id, category_id, title, description,
-        ST_Y(location::geometry) as latitude,
-        ST_X(location::geometry) as longitude,
-        address_text, neighborhood, city, state,
-        status, priority, upvotes_count, created_at, updated_at
-    `, [
-      userId,
-      input.category_id,
-      input.title,
-      input.description,
-      input.longitude,
-      input.latitude,
-      input.address_text,
-      input.neighborhood,
-      input.city,
-      input.state,
-      input.priority,
-    ]);
+    // A ocorrência e suas imagens precisam ser gravadas atomicamente: se a inserção de
+    // uma imagem falhar no meio do caminho, a ocorrência não deve ficar criada "pela metade".
+    const newIncident = await withTransaction(async (client) => {
+      // 1. Inserir ocorrência com geometria PostGIS (Longitude, Latitude)
+      const res = await client.query(
+        `
+        INSERT INTO incidents (
+          user_id, category_id, title, description,
+          location, address_text, neighborhood, city, state,
+          priority, status
+        ) VALUES (
+          $1, $2, $3, $4,
+          ST_SetSRID(ST_MakePoint($5, $6), 4326),
+          $7, $8, $9, $10,
+          $11, 'PENDING'
+        )
+        RETURNING
+          id, user_id, category_id, title, description,
+          ST_Y(location::geometry) as latitude,
+          ST_X(location::geometry) as longitude,
+          address_text, neighborhood, city, state,
+          status, priority, upvotes_count, created_at, updated_at
+      `,
+        [
+          userId,
+          input.category_id,
+          input.title,
+          input.description,
+          input.longitude,
+          input.latitude,
+          input.address_text,
+          input.neighborhood,
+          input.city,
+          input.state,
+          input.priority,
+        ]
+      );
 
-    const newIncident = res.rows[0];
+      const created = res.rows[0];
 
-    // 2. Inserir imagens associadas se houver
-    if (input.image_urls && input.image_urls.length > 0) {
-      for (const url of input.image_urls) {
-        await query(`
-          INSERT INTO incident_images (incident_id, file_url)
-          VALUES ($1, $2)
-        `, [newIncident.id, url]);
+      // 2. Inserir imagens associadas se houver
+      if (input.image_urls && input.image_urls.length > 0) {
+        for (const url of input.image_urls) {
+          await client.query(
+            `
+            INSERT INTO incident_images (incident_id, file_url)
+            VALUES ($1, $2)
+          `,
+            [created.id, url]
+          );
+        }
       }
-    }
 
-    // 3. Log de Auditoria
+      return created;
+    });
+
+    // Log de Auditoria fica fora da transação de negócio de propósito: AuditService.record
+    // já engole e loga falhas internamente para nunca bloquear a criação da ocorrência.
     await AuditService.record({
       actor_id: userId,
       actor_email: userEmail,
@@ -71,10 +85,13 @@ export class IncidentsService {
       ip_address: ipAddress,
     });
 
-    return await this.findById(newIncident.id) as Incident;
+    return (await this.findById(newIncident.id)) as Incident;
   }
 
-  static async list(params: ListIncidentsQuery, currentUserId?: string): Promise<{ data: Incident[]; total: number }> {
+  static async list(
+    params: ListIncidentsQuery,
+    currentUserId?: string
+  ): Promise<{ data: Incident[]; total: number }> {
     const conditions: string[] = [];
     const values: any[] = [];
 
@@ -129,24 +146,30 @@ export class IncidentsService {
 
     // Filtro por Bairro
     if (params.neighborhood) {
-      values.push(`%${params.neighborhood}%`);
+      // Escapa % e _ do usuário para não serem interpretados como curinga do ILIKE.
+      values.push(`%${escapeLikePattern(params.neighborhood)}%`);
       conditions.push(`i.neighborhood ILIKE $${values.length}`);
     }
 
     // Busca textual no título ou descrição
     if (params.search) {
-      values.push(`%${params.search}%`);
-      conditions.push(`(i.title ILIKE $${values.length} OR i.description ILIKE $${values.length} OR i.address_text ILIKE $${values.length})`);
+      values.push(`%${escapeLikePattern(params.search)}%`);
+      conditions.push(
+        `(i.title ILIKE $${values.length} OR i.description ILIKE $${values.length} OR i.address_text ILIKE $${values.length})`
+      );
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Contagem total
-    const countRes = await query(`
+    const countRes = await query(
+      `
       SELECT COUNT(*) as total
       FROM incidents i
       ${whereClause}
-    `, values);
+    `,
+      values
+    );
     const total = parseInt(countRes.rows[0]?.total || '0', 10);
 
     // Consulta paginada com JOINs
@@ -211,7 +234,8 @@ export class IncidentsService {
       hasVotedSelect = `EXISTS(SELECT 1 FROM incident_votes WHERE incident_id = i.id AND user_id = $2) as has_voted`;
     }
 
-    const res = await query(`
+    const res = await query(
+      `
       SELECT 
         i.id, i.user_id, u.name as user_name,
         i.category_id, c.name as category_name, c.icon as category_icon, c.color_hex as category_color,
@@ -227,21 +251,27 @@ export class IncidentsService {
       INNER JOIN users u ON u.id = i.user_id
       INNER JOIN categories c ON c.id = i.category_id
       WHERE i.id = $1
-    `, params);
+    `,
+      params
+    );
 
     const incident = res.rows[0];
     if (!incident) return null;
 
     // Buscar imagens
-    const imagesRes = await query<IncidentImage>(`
+    const imagesRes = await query<IncidentImage>(
+      `
       SELECT id, incident_id, file_url, original_name, mime_type, created_at
       FROM incident_images
       WHERE incident_id = $1
       ORDER BY created_at ASC
-    `, [id]);
+    `,
+      [id]
+    );
 
     // Buscar comentários
-    const commentsRes = await query<IncidentComment>(`
+    const commentsRes = await query<IncidentComment>(
+      `
       SELECT 
         ic.id, ic.incident_id, ic.user_id, u.name as user_name, u.role as user_role,
         ic.content, ic.is_official_response, ic.created_at
@@ -249,7 +279,9 @@ export class IncidentsService {
       INNER JOIN users u ON u.id = ic.user_id
       WHERE ic.incident_id = $1
       ORDER BY ic.created_at ASC
-    `, [id]);
+    `,
+      [id]
+    );
 
     incident.images = imagesRes.rows;
     incident.comments = commentsRes.rows;
@@ -257,31 +289,62 @@ export class IncidentsService {
     return incident;
   }
 
-  static async toggleVote(incidentId: string, userId: string): Promise<{ voted: boolean; totalUpvotes: number }> {
-    const existing = await query(`
-      SELECT id FROM incident_votes
-      WHERE incident_id = $1 AND user_id = $2
-    `, [incidentId, userId]);
+  static async toggleVote(
+    incidentId: string,
+    userId: string
+  ): Promise<{ voted: boolean; totalUpvotes: number }> {
+    // Toda a operação (checar, alternar o voto e atualizar o contador) roda em uma única
+    // transação para evitar a condição de corrida do padrão "check-then-act": dois cliques
+    // simultâneos do mesmo usuário não devem conseguir duplicar/perder o voto ou o contador.
+    return withTransaction(async (client) => {
+      const deleted = await client.query(
+        `DELETE FROM incident_votes WHERE incident_id = $1 AND user_id = $2 RETURNING id`,
+        [incidentId, userId]
+      );
 
-    let voted = false;
+      let voted: boolean;
 
-    if (existing.rows.length > 0) {
-      // Remover voto
-      await query(`DELETE FROM incident_votes WHERE incident_id = $1 AND user_id = $2`, [incidentId, userId]);
-      await query(`UPDATE incidents SET upvotes_count = GREATEST(0, upvotes_count - 1) WHERE id = $1`, [incidentId]);
-      voted = false;
-    } else {
-      // Adicionar voto
-      await query(`INSERT INTO incident_votes (incident_id, user_id) VALUES ($1, $2)`, [incidentId, userId]);
-      await query(`UPDATE incidents SET upvotes_count = upvotes_count + 1 WHERE id = $1`, [incidentId]);
-      voted = true;
-    }
+      if ((deleted.rowCount ?? 0) > 0) {
+        await client.query(
+          `UPDATE incidents SET upvotes_count = GREATEST(0, upvotes_count - 1) WHERE id = $1`,
+          [incidentId]
+        );
+        voted = false;
+      } else {
+        // SAVEPOINT é necessário aqui: no Postgres, uma vez que uma query falha dentro de
+        // uma transação, TODA a transação fica "abortada" (mesmo capturando a exceção em
+        // JS) até um ROLLBACK — sem o savepoint, o SELECT final abaixo falharia também.
+        await client.query('SAVEPOINT vote_insert');
+        try {
+          await client.query(`INSERT INTO incident_votes (incident_id, user_id) VALUES ($1, $2)`, [
+            incidentId,
+            userId,
+          ]);
+          await client.query(
+            `UPDATE incidents SET upvotes_count = upvotes_count + 1 WHERE id = $1`,
+            [incidentId]
+          );
+          voted = true;
+        } catch (error: any) {
+          // Corrida rara: outra requisição concorrente do mesmo usuário já inseriu o voto
+          // entre o DELETE (0 linhas) e este INSERT. Trata como "já votado" em vez de 500.
+          if (error?.code === '23505') {
+            await client.query('ROLLBACK TO SAVEPOINT vote_insert');
+            voted = true;
+          } else {
+            throw error;
+          }
+        }
+      }
 
-    const countRes = await query(`SELECT upvotes_count FROM incidents WHERE id = $1`, [incidentId]);
-    return {
-      voted,
-      totalUpvotes: countRes.rows[0]?.upvotes_count || 0,
-    };
+      const countRes = await client.query(`SELECT upvotes_count FROM incidents WHERE id = $1`, [
+        incidentId,
+      ]);
+      return {
+        voted,
+        totalUpvotes: countRes.rows[0]?.upvotes_count || 0,
+      };
+    });
   }
 
   static async addComment(
@@ -290,11 +353,14 @@ export class IncidentsService {
     content: string,
     isOfficial = false
   ): Promise<IncidentComment> {
-    const res = await query(`
+    const res = await query(
+      `
       INSERT INTO incident_comments (incident_id, user_id, content, is_official_response)
       VALUES ($1, $2, $3, $4)
       RETURNING id, incident_id, user_id, content, is_official_response, created_at
-    `, [incidentId, userId, content, isOfficial]);
+    `,
+      [incidentId, userId, content, isOfficial]
+    );
 
     const userRes = await query(`SELECT name, role FROM users WHERE id = $1`, [userId]);
 

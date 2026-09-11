@@ -14,7 +14,7 @@ export const RadiusSlider: React.FC<RadiusSliderProps> = ({ radiusKm, onChange }
       <div className="flex items-center justify-between text-xs mb-2">
         <div className="flex items-center space-x-1.5 font-semibold text-slate-700">
           <Compass className="w-4 h-4 text-brand-600" />
-          <span>Raio de Busca (PostGIS):</span>
+          <span>Raio de busca:</span>
         </div>
         <span className="font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200">
           {radiusKm} km

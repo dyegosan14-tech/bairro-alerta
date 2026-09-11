@@ -5,7 +5,10 @@ import { RegisterInput, LoginInput } from './auth.schema.js';
 import { AuditService } from '../audit/audit.service.js';
 
 export class AuthService {
-  static async register(input: RegisterInput, ipAddress?: string): Promise<{ user: Omit<User, 'password_hash'> }> {
+  static async register(
+    input: RegisterInput,
+    ipAddress?: string
+  ): Promise<{ user: Omit<User, 'password_hash'> }> {
     // 1. Verificar se e-mail já existe
     const existing = await query<User>('SELECT id FROM users WHERE email = $1', [input.email]);
     if (existing.rows.length > 0) {
@@ -19,11 +22,14 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(input.password, salt);
 
     // 3. Inserir usuário com papel padrão CITIZEN
-    const res = await query<User>(`
+    const res = await query<User>(
+      `
       INSERT INTO users (name, email, password_hash, role, neighborhood, city)
       VALUES ($1, $2, $3, 'CITIZEN', $4, $5)
       RETURNING id, name, email, role, avatar_url, neighborhood, city, is_active, created_at, updated_at
-    `, [input.name, input.email, passwordHash, input.neighborhood || null, input.city || 'São Paulo']);
+    `,
+      [input.name, input.email, passwordHash, input.neighborhood || null, input.city || 'São Paulo']
+    );
 
     const newUser = res.rows[0];
 

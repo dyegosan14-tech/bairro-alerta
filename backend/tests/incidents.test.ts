@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { createIncidentSchema, listIncidentsQuerySchema } from '../src/modules/incidents/incidents.schema.js';
+import {
+  createIncidentSchema,
+  listIncidentsQuerySchema,
+} from '../src/modules/incidents/incidents.schema.js';
 
 describe('Módulo de Ocorrências - Validação Geoespacial e Schemas', () => {
   it('deve validar ocorrência com coordenadas válidas de latitude e longitude', () => {

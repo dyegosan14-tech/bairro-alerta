@@ -22,28 +22,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAuthenticated = !!user;
 
   const login = async (email: string, pass: string) => {
-    try {
-      const res = await api.post('/auth/login', { email, password: pass });
-      const { user, token } = res.data;
-      localStorage.setItem('@voz_do_bairro:token', token);
-      localStorage.setItem('@voz_do_bairro:user', JSON.stringify(user));
-      setUser(user);
-    } catch (err: any) {
-      // Fallback para login simulado se backend estiver offline
-      quickDemoLogin(email.includes('admin') ? 'ADMIN' : email.includes('mod') ? 'MODERATOR' : 'CITIZEN');
-    }
+    // Sem fallback automático: uma falha real (senha errada, backend fora do ar, etc.)
+    // deve sempre virar um erro visível para quem chamou (ver AuthModal), nunca uma
+    // sessão fictícia. O acesso de demonstração continua existindo, mas só via
+    // `quickDemoLogin`, chamado explicitamente pelos botões de 1-click do AuthModal.
+    const res = await api.post('/auth/login', { email, password: pass });
+    const { user, token } = res.data;
+    localStorage.setItem('@voz_do_bairro:token', token);
+    localStorage.setItem('@voz_do_bairro:user', JSON.stringify(user));
+    setUser(user);
   };
 
   const register = async (data: any) => {
-    try {
-      const res = await api.post('/auth/register', data);
-      const { user, token } = res.data;
-      localStorage.setItem('@voz_do_bairro:token', token);
-      localStorage.setItem('@voz_do_bairro:user', JSON.stringify(user));
-      setUser(user);
-    } catch (err: any) {
-      quickDemoLogin('CITIZEN');
-    }
+    const res = await api.post('/auth/register', data);
+    const { user, token } = res.data;
+    localStorage.setItem('@voz_do_bairro:token', token);
+    localStorage.setItem('@voz_do_bairro:user', JSON.stringify(user));
+    setUser(user);
   };
 
   const logout = () => {
@@ -94,7 +89,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, register, logout, quickDemoLogin }}>
+    <AuthContext.Provider
+      value={{ user, isAuthenticated, login, register, logout, quickDemoLogin }}
+    >
       {children}
     </AuthContext.Provider>
   );

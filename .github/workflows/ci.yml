@@ -8,7 +8,7 @@ on:
 
 jobs:
   backend-test:
-    name: Backend Lint & Tests
+    name: Backend Typecheck & Tests
     runs-on: ubuntu-latest
 
     services:
@@ -35,23 +35,39 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          # Monorepo com npm workspaces: existe um único package-lock.json na raiz
+          # (backend/ e frontend/ não têm lockfile próprio) — por isso `npm ci` roda
+          # sempre a partir da raiz do projeto, nunca de dentro de cada workspace.
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
-        run: cd backend && npm ci
+      - name: Install dependencies (workspace root)
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace=backend
+
+      - name: Typecheck
+        run: npm run typecheck --workspace=backend
+
+      - name: Run migrations (schema para os testes de integração PostGIS)
+        env:
+          DATABASE_URL: postgresql://voz_user:voz_secret_password@localhost:5432/voz_do_bairro_test
+          JWT_SECRET: ci_test_secret_jwt_key_1234567890
+          NODE_ENV: test
+        run: npm run migrate --workspace=backend
 
       - name: Run Tests
         env:
           DATABASE_URL: postgresql://voz_user:voz_secret_password@localhost:5432/voz_do_bairro_test
           JWT_SECRET: ci_test_secret_jwt_key_1234567890
           NODE_ENV: test
-        run: cd backend && npm test
+        run: npm run test --workspace=backend
 
       - name: Build Backend
-        run: cd backend && npm run build
+        run: npm run build --workspace=backend
 
   frontend-build:
-    name: Frontend Lint & Build
+    name: Frontend Typecheck, Tests & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -63,10 +79,19 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
-        run: cd frontend && npm ci
+      - name: Install dependencies (workspace root)
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace=frontend
+
+      - name: Typecheck
+        run: npm run typecheck --workspace=frontend
+
+      - name: Run Tests
+        run: npm run test --workspace=frontend
 
       - name: Build Frontend
-        run: cd frontend && npm run build
+        run: npm run build --workspace=frontend

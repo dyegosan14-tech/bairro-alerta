@@ -16,15 +16,16 @@ export async function authRoutes(app: FastifyInstance) {
       schema: {
         tags: ['Autenticação'],
         summary: 'Cadastrar novo cidadão',
+        // Alinhado com auth.schema.ts (registerSchema).
         body: {
           type: 'object',
           required: ['name', 'email', 'password'],
           properties: {
-            name: { type: 'string', minLength: 2 },
+            name: { type: 'string', minLength: 2, maxLength: 100 },
             email: { type: 'string', format: 'email' },
             password: { type: 'string', minLength: 6 },
-            neighborhood: { type: 'string' },
-            city: { type: 'string', default: 'São Paulo' },
+            neighborhood: { type: 'string', maxLength: 150 },
+            city: { type: 'string', maxLength: 100, default: 'São Paulo' },
           },
         },
       },

@@ -5,6 +5,7 @@ image: node:20-alpine
 
 stages:
   - lint
+  - typecheck
   - test
   - build
   - containerize
@@ -14,29 +15,50 @@ variables:
   DOCKER_TLS_CERTDIR: ""
   NODE_ENV: test
 
+# Este é um monorepo com npm workspaces: existe UM único package-lock.json na raiz
+# (backend/ e frontend/ não têm lockfile próprio). Por isso `npm ci` roda sempre a
+# partir da raiz do projeto (onde o lockfile existe) e os scripts de cada workspace são
+# disparados com `--workspace=`, em vez de `cd backend && npm ci` / `cd frontend && npm ci`
+# (que falhariam por não haver lockfile ali).
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - .npm/
+    - node_modules/
     - backend/node_modules/
     - frontend/node_modules/
 
 # ------------------------------------------------------------------------------
-# 1. Stage: Lint & Code Quality
+# 0. Stage: Lint (ESLint de verdade agora existe nos dois workspaces — antes era
+#    "npm run lint || true", que mascarava qualquer falha e, no backend, nem tinha
+#    script "lint" definido).
 # ------------------------------------------------------------------------------
 lint:backend:
   stage: lint
   script:
-    - cd backend
-    - npm ci --cache ../.npm --prefer-offline
-    - npm run lint || true
+    - npm ci --cache .npm --prefer-offline
+    - npm run lint --workspace=backend
 
 lint:frontend:
   stage: lint
   script:
-    - cd frontend
-    - npm ci --cache ../.npm --prefer-offline
-    - npm run lint || true
+    - npm ci --cache .npm --prefer-offline
+    - npm run lint --workspace=frontend
+
+# ------------------------------------------------------------------------------
+# 1. Stage: Typecheck
+# ------------------------------------------------------------------------------
+typecheck:backend:
+  stage: typecheck
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run typecheck --workspace=backend
+
+typecheck:frontend:
+  stage: typecheck
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run typecheck --workspace=frontend
 
 # ------------------------------------------------------------------------------
 # 2. Stage: Automated Unit & Integration Tests
@@ -53,9 +75,15 @@ test:backend:
     DATABASE_URL: postgresql://voz_user:voz_secret_password@postgres:5432/voz_do_bairro_test
     JWT_SECRET: ci_test_secret_jwt_key_1234567890
   script:
-    - cd backend
-    - npm ci --cache ../.npm --prefer-offline
-    - npm run test
+    - npm ci --cache .npm --prefer-offline
+    - npm run migrate --workspace=backend
+    - npm run test --workspace=backend
+
+test:frontend:
+  stage: test
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run test --workspace=frontend
 
 # ------------------------------------------------------------------------------
 # 3. Stage: Build Artifacts
@@ -63,9 +91,8 @@ test:backend:
 build:backend:
   stage: build
   script:
-    - cd backend
-    - npm ci --cache ../.npm --prefer-offline
-    - npm run build
+    - npm ci --cache .npm --prefer-offline
+    - npm run build --workspace=backend
   artifacts:
     expire_in: 1 week
     paths:
@@ -74,9 +101,8 @@ build:backend:
 build:frontend:
   stage: build
   script:
-    - cd frontend
-    - npm ci --cache ../.npm --prefer-offline
-    - npm run build
+    - npm ci --cache .npm --prefer-offline
+    - npm run build --workspace=frontend
   artifacts:
     expire_in: 1 week
     paths:

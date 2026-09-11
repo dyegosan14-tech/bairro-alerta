@@ -14,7 +14,9 @@ export async function runMigrations() {
     const sqlContent = fs.readFileSync(sqlPath, 'utf8');
 
     await query(sqlContent);
-    logger.info('✅ Migrations executadas com sucesso! Extensões, tabelas e índices PostGIS criados.');
+    logger.info(
+      '✅ Migrations executadas com sucesso! Extensões, tabelas e índices PostGIS criados.'
+    );
   } catch (error) {
     logger.error({ error }, '❌ Erro ao executar migrations');
     throw error;

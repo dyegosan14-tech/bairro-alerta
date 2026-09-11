@@ -28,6 +28,10 @@ export async function usersRoutes(app: FastifyInstance) {
       schema: {
         tags: ['Usuários'],
         summary: 'Obter detalhes de um usuário por ID',
+        params: {
+          type: 'object',
+          properties: { id: { type: 'string', format: 'uuid' } },
+        },
       },
     },
     UsersController.getById
@@ -40,6 +44,10 @@ export async function usersRoutes(app: FastifyInstance) {
       schema: {
         tags: ['Usuários'],
         summary: 'Alterar papel/permissão de um usuário (Apenas Admin)',
+        params: {
+          type: 'object',
+          properties: { id: { type: 'string', format: 'uuid' } },
+        },
         body: {
           type: 'object',
           required: ['role'],

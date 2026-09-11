@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import { Incident } from '../types/index.js';
-import { 
-  ShieldCheck, 
-  Check, 
-  X, 
-  Clock, 
-  Wrench, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  ShieldCheck,
+  Check,
+  X,
+  Clock,
+  Wrench,
+  CheckCircle,
+  AlertCircle,
   MapPin,
   Eye,
-  Filter
+  Filter,
 } from 'lucide-react';
 
 interface ModerationPageProps {
   incidents: Incident[];
   onSelectIncident: (inc: Incident) => void;
-  onUpdateStatus: (id: string, data: { status: string; priority?: string; moderator_notes?: string }) => void;
+  onUpdateStatus: (
+    id: string,
+    data: { status: string; priority?: string; moderator_notes?: string }
+  ) => void;
 }
 
 export const ModerationPage: React.FC<ModerationPageProps> = ({
@@ -35,7 +38,6 @@ export const ModerationPage: React.FC<ModerationPageProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in">
-      
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -43,9 +45,7 @@ export const ModerationPage: React.FC<ModerationPageProps> = ({
             <span className="p-2 bg-amber-100 text-amber-800 rounded-xl">
               <ShieldCheck className="w-5 h-5" />
             </span>
-            <h1 className="text-2xl font-black text-slate-900">
-              Painel de Triagem & Moderação
-            </h1>
+            <h1 className="text-2xl font-black text-slate-900">Painel de Triagem & Moderação</h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Validação de chamados, direcionamento às secretarias municipais e auditoria de ações.
@@ -65,9 +65,18 @@ export const ModerationPage: React.FC<ModerationPageProps> = ({
       <div className="flex items-center space-x-2 border-b border-slate-200 pb-3 overflow-x-auto text-xs">
         {[
           { key: 'PENDING', label: `Triagem (${pendingCount})` },
-          { key: 'APPROVED', label: `Validados (${incidents.filter(i => i.status === 'APPROVED').length})` },
-          { key: 'IN_PROGRESS', label: `Em Andamento (${incidents.filter(i => i.status === 'IN_PROGRESS').length})` },
-          { key: 'RESOLVED', label: `Resolvidos (${incidents.filter(i => i.status === 'RESOLVED').length})` },
+          {
+            key: 'APPROVED',
+            label: `Validados (${incidents.filter((i) => i.status === 'APPROVED').length})`,
+          },
+          {
+            key: 'IN_PROGRESS',
+            label: `Em Andamento (${incidents.filter((i) => i.status === 'IN_PROGRESS').length})`,
+          },
+          {
+            key: 'RESOLVED',
+            label: `Resolvidos (${incidents.filter((i) => i.status === 'RESOLVED').length})`,
+          },
           { key: 'ALL', label: `Todos (${incidents.length})` },
         ].map((tab) => (
           <button
@@ -103,11 +112,15 @@ export const ModerationPage: React.FC<ModerationPageProps> = ({
                   {inc.category_name}
                 </span>
 
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  inc.priority === 'URGENT' ? 'bg-rose-100 text-rose-800 animate-pulse' :
-                  inc.priority === 'HIGH' ? 'bg-orange-100 text-orange-800' :
-                  'bg-slate-100 text-slate-700'
-                }`}>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    inc.priority === 'URGENT'
+                      ? 'bg-rose-100 text-rose-800 animate-pulse'
+                      : inc.priority === 'HIGH'
+                        ? 'bg-orange-100 text-orange-800'
+                        : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
                   Prioridade: {inc.priority}
                 </span>
               </div>
@@ -117,7 +130,9 @@ export const ModerationPage: React.FC<ModerationPageProps> = ({
 
               <div className="flex items-center text-[11px] text-slate-400 mt-2">
                 <MapPin className="w-3 h-3 mr-1 text-slate-400" />
-                <span className="truncate">{inc.address_text}, {inc.neighborhood}</span>
+                <span className="truncate">
+                  {inc.address_text}, {inc.neighborhood}
+                </span>
               </div>
             </div>
 
@@ -135,14 +150,25 @@ export const ModerationPage: React.FC<ModerationPageProps> = ({
                 {inc.status === 'PENDING' && (
                   <>
                     <button
-                      onClick={() => onUpdateStatus(inc.id, { status: 'APPROVED', moderator_notes: 'Ocorrência validada e enviada à secretaria competente.' })}
+                      onClick={() =>
+                        onUpdateStatus(inc.id, {
+                          status: 'APPROVED',
+                          moderator_notes: 'Ocorrência validada e enviada à secretaria competente.',
+                        })
+                      }
                       className="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold px-2.5 py-1 rounded-lg transition-colors"
                     >
                       <Check className="w-3.5 h-3.5" />
                       <span>Aprovar</span>
                     </button>
                     <button
-                      onClick={() => onUpdateStatus(inc.id, { status: 'REJECTED', moderator_notes: 'Ocorrência rejeitada por falta de informações ou duplicidade.' })}
+                      onClick={() =>
+                        onUpdateStatus(inc.id, {
+                          status: 'REJECTED',
+                          moderator_notes:
+                            'Ocorrência rejeitada por falta de informações ou duplicidade.',
+                        })
+                      }
                       className="inline-flex items-center space-x-1 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold px-2 py-1 rounded-lg transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -153,7 +179,12 @@ export const ModerationPage: React.FC<ModerationPageProps> = ({
 
                 {inc.status === 'APPROVED' && (
                   <button
-                    onClick={() => onUpdateStatus(inc.id, { status: 'IN_PROGRESS', moderator_notes: 'Equipe de manutenção alocada no local.' })}
+                    onClick={() =>
+                      onUpdateStatus(inc.id, {
+                        status: 'IN_PROGRESS',
+                        moderator_notes: 'Equipe de manutenção alocada no local.',
+                      })
+                    }
                     className="inline-flex items-center space-x-1 bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold px-2.5 py-1 rounded-lg transition-colors"
                   >
                     <Wrench className="w-3.5 h-3.5" />
@@ -163,7 +194,12 @@ export const ModerationPage: React.FC<ModerationPageProps> = ({
 
                 {inc.status === 'IN_PROGRESS' && (
                   <button
-                    onClick={() => onUpdateStatus(inc.id, { status: 'RESOLVED', moderator_notes: 'Serviço de manutenção urbana concluído com sucesso.' })}
+                    onClick={() =>
+                      onUpdateStatus(inc.id, {
+                        status: 'RESOLVED',
+                        moderator_notes: 'Serviço de manutenção urbana concluído com sucesso.',
+                      })
+                    }
                     className="inline-flex items-center space-x-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold px-2.5 py-1 rounded-lg transition-colors"
                   >
                     <CheckCircle className="w-3.5 h-3.5" />
@@ -175,7 +211,6 @@ export const ModerationPage: React.FC<ModerationPageProps> = ({
           </div>
         ))}
       </div>
-
     </div>
   );
 };

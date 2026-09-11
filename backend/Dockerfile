@@ -5,8 +5,13 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# NOTA: este monorepo usa npm workspaces com um único package-lock.json na raiz, que não
+# entra no contexto de build (context: ./backend). `npm ci` exige um lockfile presente e
+# falharia aqui — por isso usamos `npm install`. Isso é menos reprodutível que `npm ci`;
+# se quiser builds 100% determinísticos, gere um package-lock.json dedicado dentro de
+# backend/ (ou mude o build context do compose para a raiz do monorepo) e volte para `npm ci`.
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY tsconfig.json ./
 COPY src ./src
@@ -23,7 +28,7 @@ ENV PORT=3001
 ENV HOST=0.0.0.0
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 COPY --from=builder /app/dist ./dist
 COPY src/database/init.sql ./dist/database/init.sql

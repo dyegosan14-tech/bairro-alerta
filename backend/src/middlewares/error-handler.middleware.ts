@@ -3,12 +3,29 @@ import { ZodError } from 'zod';
 import { logger } from '../config/logger.js';
 
 export function errorHandler(error: FastifyError, request: FastifyRequest, reply: FastifyReply) {
-  logger.error({
-    err: error,
-    url: request.url,
-    method: request.method,
-    ip: request.ip,
-  }, 'Erro durante o processamento da requisição');
+  // request.id (gerado pelo Fastify por request) correlaciona esta entrada de log com o
+  // requestId devolvido ao cliente abaixo — antes não havia como ligar um erro relatado
+  // pelo usuário a uma linha específica do log do servidor.
+  logger.error(
+    {
+      err: error,
+      url: request.url,
+      method: request.method,
+      ip: request.ip,
+      requestId: request.id,
+    },
+    'Erro durante o processamento da requisição'
+  );
+
+  // Ponto de integração para um APM/rastreador de erros (ex.: Sentry, OpenTelemetry): não
+  // adicionamos o SDK agora por não haver um DSN/projeto configurado nem como validar a
+  // integração neste ambiente, mas aqui é onde ela entraria — só para erros inesperados
+  // (5xx), nunca para 4xx esperados (validação, permissão, etc.), para não afogar o
+  // rastreador com "erros" que já são tratados normalmente pela aplicação:
+  //
+  //   if ((error.statusCode ?? 500) >= 500) {
+  //     Sentry.captureException(error, { tags: { requestId: request.id } });
+  //   }
 
   // Erro de Validação de Schema (Zod)
   if (error instanceof ZodError) {
@@ -20,6 +37,7 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
         field: issue.path.join('.'),
         message: issue.message,
       })),
+      requestId: request.id,
     });
   }
 
@@ -29,6 +47,7 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
       statusCode: 429,
       error: 'Too Many Requests',
       message: 'Você atingiu o limite de requisições. Aguarde alguns instantes e tente novamente.',
+      requestId: request.id,
     });
   }
 
@@ -38,6 +57,7 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
       statusCode: 409,
       error: 'Conflict',
       message: 'Já existe um registro com os mesmos dados únicos (ex: email ou slug duplicado).',
+      requestId: request.id,
     });
   }
 
@@ -49,5 +69,6 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
     statusCode,
     error: error.name || 'InternalServerError',
     message,
+    requestId: request.id,
   });
 }

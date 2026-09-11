@@ -1,6 +1,10 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { IncidentsService } from './incidents.service.js';
-import { createIncidentSchema, listIncidentsQuerySchema, addCommentSchema } from './incidents.schema.js';
+import {
+  createIncidentSchema,
+  listIncidentsQuerySchema,
+  addCommentSchema,
+} from './incidents.schema.js';
 
 export class IncidentsController {
   static async create(request: FastifyRequest, reply: FastifyReply) {
@@ -39,6 +43,7 @@ export class IncidentsController {
         statusCode: 404,
         error: 'Not Found',
         message: 'Ocorrência não encontrada.',
+        requestId: request.id,
       });
     }
 

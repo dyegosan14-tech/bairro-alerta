@@ -10,15 +10,31 @@ interface IncidentCardProps {
 
 export const IncidentCard: React.FC<IncidentCardProps> = ({ incident, onClick, onVote }) => {
   const statusStyles: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-    PENDING: { label: 'Em Triagem', bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
+    PENDING: {
+      label: 'Em Triagem',
+      bg: 'bg-amber-50',
+      text: 'text-amber-700',
+      dot: 'bg-amber-500',
+    },
     APPROVED: { label: 'Validado', bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' },
-    IN_PROGRESS: { label: 'Em Manutenção', bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
-    RESOLVED: { label: 'Resolvido', bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+    IN_PROGRESS: {
+      label: 'Em Manutenção',
+      bg: 'bg-purple-50',
+      text: 'text-purple-700',
+      dot: 'bg-purple-500',
+    },
+    RESOLVED: {
+      label: 'Resolvido',
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-700',
+      dot: 'bg-emerald-500',
+    },
     REJECTED: { label: 'Arquivado', bg: 'bg-rose-50', text: 'text-rose-700', dot: 'bg-rose-500' },
   };
 
   const status = statusStyles[incident.status] || statusStyles.PENDING;
-  const imageUrl = incident.images && incident.images.length > 0 ? incident.images[0].file_url : null;
+  const imageUrl =
+    incident.images && incident.images.length > 0 ? incident.images[0].file_url : null;
 
   return (
     <div
@@ -45,7 +61,9 @@ export const IncidentCard: React.FC<IncidentCardProps> = ({ incident, onClick, o
                 <AlertCircle className="w-3 h-3 mr-0.5 text-rose-600 animate-pulse" /> Urgente
               </span>
             )}
-            <span className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full ${status.bg} ${status.text}`}>
+            <span
+              className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full ${status.bg} ${status.text}`}
+            >
               <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status.dot}`}></span>
               {status.label}
             </span>
