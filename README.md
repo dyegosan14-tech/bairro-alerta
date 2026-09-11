@@ -11,7 +11,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg)](https://tailwindcss.com/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg)](https://www.docker.com/)
 [![Vitest](https://img.shields.io/badge/Vitest-Automated_Tests-FCC72B.svg)](https://vitest.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 
 ---
 
@@ -240,6 +240,6 @@ voz-do-bairro/
 
 ---
 
-## 📄 Licença
-
-Distribuído sob a licença **MIT**. Veja `LICENSE` para mais informações.
+## 📄 Licença & Direitos Autorais
+ 
+Projeto sob **Licença Proprietária / Direitos Autorais Reservados**. Consulte o arquivo [LICENSE](LICENSE) para os termos completos de uso e titularidade.
