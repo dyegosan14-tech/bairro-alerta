@@ -43,7 +43,8 @@ export const IncidentMap: React.FC<IncidentMapProps> = ({
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map);
 
@@ -55,6 +56,11 @@ export const IncidentMap: React.FC<IncidentMapProps> = ({
       mapInstanceRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (map) map.setView(center, map.getZoom(), { animate: true });
+  }, [center]);
 
   // Evento de clique para o modo Seletor de Coordenadas
   useEffect(() => {
@@ -124,7 +130,9 @@ export const IncidentMap: React.FC<IncidentMapProps> = ({
     const markersGroup = markersGroupRef.current;
     if (!map || !markersGroup) return;
 
-    markersGroup.clearLayers();
+    if (typeof markersGroup.clearLayers === 'function') {
+      markersGroup.clearLayers();
+    }
 
     if (isPickerMode) return; // Não renderiza ocorrências se estiver apenas escolhendo local
 

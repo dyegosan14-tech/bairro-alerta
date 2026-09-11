@@ -9,16 +9,16 @@ services:
     container_name: voz_do_bairro_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: voz_user
-      POSTGRES_PASSWORD: voz_secret_password
-      POSTGRES_DB: voz_do_bairro
+      POSTGRES_USER: ${DB_USER:-voz_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-voz_secret_password}
+      POSTGRES_DB: ${DB_NAME:-voz_do_bairro}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/src/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U voz_user -d voz_do_bairro"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-voz_user} -d ${DB_NAME:-voz_do_bairro}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -38,15 +38,12 @@ services:
       NODE_ENV: production
       PORT: 3001
       HOST: 0.0.0.0
-      DATABASE_URL: postgresql://voz_user:voz_secret_password@postgres:5432/voz_do_bairro
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: voz_user
-      DB_PASSWORD: voz_secret_password
-      DB_NAME: voz_do_bairro
-      JWT_SECRET: super_secret_jwt_key_voz_do_bairro_change_in_production_2026_xYz
+      DATABASE_URL: postgresql://${DB_USER:-voz_user}:${DB_PASSWORD:-voz_secret_password}@postgres:5432/${DB_NAME:-voz_do_bairro}
+      # JWT_SECRET não tem valor padrão aqui de propósito: se não vier de um .env real na
+      # raiz do projeto, o backend recusa iniciar em produção (ver getInsecureProductionIssues).
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: 7d
-      CORS_ORIGIN: http://localhost:3000
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       UPLOAD_DIR: ./uploads
     ports:
       - "3001:3001"
@@ -55,6 +52,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - voz_network
 
@@ -72,7 +75,8 @@ services:
     environment:
       - VITE_API_URL=http://localhost:3001/api/v1
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - voz_network
 

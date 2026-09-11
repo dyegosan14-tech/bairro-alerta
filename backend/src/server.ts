@@ -10,7 +10,9 @@ async function start() {
     // Testar conectividade com o banco
     const isDbConnected = await testDbConnection();
     if (!isDbConnected) {
-      logger.warn('⚠️ O servidor subirá, mas recursos de banco dependem da inicialização do PostgreSQL/PostGIS via Docker.');
+      logger.warn(
+        '⚠️ O servidor subirá, mas recursos de banco dependem da inicialização do PostgreSQL/PostGIS via Docker.'
+      );
     }
 
     const app = await buildApp();
@@ -20,7 +22,9 @@ async function start() {
       host: env.HOST,
     });
 
-    logger.info(`✨ Servidor HTTP rodando em: http://${env.HOST === '0.0.0.0' ? 'localhost' : env.HOST}:${env.PORT}`);
+    logger.info(
+      `✨ Servidor HTTP rodando em: http://${env.HOST === '0.0.0.0' ? 'localhost' : env.HOST}:${env.PORT}`
+    );
     logger.info(`📚 Documentação Swagger interativa em: http://localhost:${env.PORT}/docs`);
     logger.info(`💓 Healthcheck em: http://localhost:${env.PORT}/health`);
 
@@ -33,7 +37,6 @@ async function start() {
 
     process.on('SIGINT', () => closeGracefully('SIGINT'));
     process.on('SIGTERM', () => closeGracefully('SIGTERM'));
-
   } catch (error) {
     logger.fatal({ error }, 'Erro fatal ao iniciar a aplicação');
     process.exit(1);

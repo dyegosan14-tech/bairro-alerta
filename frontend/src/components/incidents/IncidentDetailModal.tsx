@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Incident } from '../../types/index.js';
 import { useAuth } from '../../contexts/AuthContext.js';
-import { 
-  X, 
-  MapPin, 
-  Clock, 
-  ThumbsUp, 
-  Send, 
-  ShieldCheck, 
-  CheckCircle2, 
+import { useEscapeToClose } from '../../hooks/useEscapeToClose.js';
+import { useModalAccessibility } from '../../hooks/useModalAccessibility.js';
+import {
+  X,
+  MapPin,
+  Clock,
+  ThumbsUp,
+  Send,
+  ShieldCheck,
+  CheckCircle2,
   AlertTriangle,
   MessageSquare,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
 
 interface IncidentDetailModalProps {
@@ -19,7 +21,10 @@ interface IncidentDetailModalProps {
   onClose: () => void;
   onVote: (id: string) => void;
   onAddComment: (id: string, text: string) => void;
-  onUpdateStatus?: (id: string, data: { status: string; priority?: string; moderator_notes?: string }) => void;
+  onUpdateStatus?: (
+    id: string,
+    data: { status: string; priority?: string; moderator_notes?: string }
+  ) => void;
 }
 
 export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
@@ -29,14 +34,42 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
   onAddComment,
   onUpdateStatus,
 }) => {
-  if (!incident) return null;
-
+  // IMPORTANTE: hooks nunca podem vir depois de um retorno condicional (Rules of Hooks).
+  // O early-return por `incident` nulo antes de useState/useAuth fazia este componente
+  // chamar 0 hooks quando fechado e ~5 hooks quando aberto — como App.tsx sempre o
+  // renderiza (variando só a prop `incident`), a primeira ocorrência selecionada disparava
+  // "Rendered more hooks than during the previous render" e derrubava a SPA inteira (não
+  // há Error Boundary). Os hooks agora rodam sempre, e o retorno condicional vem depois.
   const { user } = useAuth();
   const [commentText, setCommentText] = useState('');
-  const [modStatus, setModStatus] = useState(incident.status);
-  const [modPriority, setModPriority] = useState(incident.priority);
-  const [modNotes, setModNotes] = useState(incident.moderator_notes || '');
+  // Valores iniciais nunca undefined (mesmo com `incident` nulo no primeiro mount) para não
+  // fazer os <select> abaixo alternarem de "uncontrolled" para "controlled" quando o
+  // useEffect abaixo resincroniza com a ocorrência de verdade logo em seguida.
+  const [modStatus, setModStatus] = useState<Incident['status']>(incident?.status ?? 'PENDING');
+  const [modPriority, setModPriority] = useState<Incident['priority']>(
+    incident?.priority ?? 'MEDIUM'
+  );
+  const [modNotes, setModNotes] = useState(incident?.moderator_notes || '');
   const [isUpdatingMod, setIsUpdatingMod] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // useState só usa o valor inicial no primeiro mount deste componente — como ele agora
+  // permanece montado entre uma ocorrência e outra (ou entre fechado/aberto), o formulário
+  // de moderação precisa ser resincronizado explicitamente sempre que uma ocorrência
+  // diferente é selecionada.
+  useEffect(() => {
+    if (incident) {
+      setModStatus(incident.status);
+      setModPriority(incident.priority);
+      setModNotes(incident.moderator_notes || '');
+    }
+  }, [incident?.id]);
+
+  useEscapeToClose(!!incident, onClose);
+  useModalAccessibility(!!incident, dialogRef, closeButtonRef);
+
+  if (!incident) return null;
 
   const canModerate = user && (user.role === 'MODERATOR' || user.role === 'ADMIN');
 
@@ -68,9 +101,17 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
   const currentStepIndex = statusSteps.findIndex((s) => s.key === incident.status);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
-        
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="incident-detail-title"
+    >
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]"
+      >
         {/* Header do Modal */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center space-x-2">
@@ -88,7 +129,9 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
           </div>
 
           <button
+            ref={closeButtonRef}
             onClick={onClose}
+            aria-label="Fechar"
             className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -97,10 +140,12 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
 
         {/* Conteúdo com Scroll */}
         <div className="p-6 overflow-y-auto space-y-6">
-          
           {/* Título e Info Básica */}
           <div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+            <h2
+              id="incident-detail-title"
+              className="text-xl sm:text-2xl font-black text-slate-900 leading-tight"
+            >
               {incident.title}
             </h2>
             <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-500">
@@ -111,7 +156,8 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
               <span>•</span>
               <span className="flex items-center">
                 <Clock className="w-3.5 h-3.5 mr-1 text-slate-400" />
-                Reportado por {incident.user_name || 'Cidadão'} em {new Date(incident.created_at).toLocaleDateString('pt-BR')}
+                Reportado por {incident.user_name || 'Cidadão'} em{' '}
+                {new Date(incident.created_at).toLocaleDateString('pt-BR')}
               </span>
             </div>
           </div>
@@ -129,13 +175,17 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
 
           {/* Descrição Detalhada */}
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm text-slate-700 leading-relaxed">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-1">Descrição do Cidadão</h4>
+            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-1">
+              Descrição do Cidadão
+            </h4>
             {incident.description}
           </div>
 
           {/* Linha do Tempo / Status do Chamado */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500 mb-4">Progresso do Atendimento</h4>
+            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500 mb-4">
+              Progresso do Atendimento
+            </h4>
             <div className="grid grid-cols-4 gap-2 text-center text-xs">
               {statusSteps.map((step, idx) => {
                 const isPassed = currentStepIndex >= idx;
@@ -151,7 +201,9 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
                     >
                       {idx + 1}
                     </div>
-                    <span className={`mt-2 font-medium text-[11px] ${isPassed ? 'text-slate-800' : 'text-slate-400'}`}>
+                    <span
+                      className={`mt-2 font-medium text-[11px] ${isPassed ? 'text-slate-800' : 'text-slate-400'}`}
+                    >
                       {step.label}
                     </span>
                   </div>
@@ -165,7 +217,9 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
             <div className="bg-sky-50 border border-sky-200 p-4 rounded-2xl flex items-start space-x-3 text-sky-900 text-sm">
               <ShieldCheck className="w-5 h-5 text-sky-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h5 className="font-bold text-xs uppercase tracking-wider text-sky-700">Resposta da Gestão Municipal</h5>
+                <h5 className="font-bold text-xs uppercase tracking-wider text-sky-700">
+                  Resposta da Gestão Municipal
+                </h5>
                 <p className="mt-1 text-sky-950 font-medium">{incident.moderator_notes}</p>
               </div>
             </div>
@@ -181,8 +235,14 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-amber-800 mb-1">Alterar Status</label>
+                  <label
+                    htmlFor="mod-status"
+                    className="block text-xs font-semibold text-amber-800 mb-1"
+                  >
+                    Alterar Status
+                  </label>
                   <select
+                    id="mod-status"
                     value={modStatus}
                     onChange={(e) => setModStatus(e.target.value as any)}
                     className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-amber-500 outline-hidden"
@@ -196,8 +256,14 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-amber-800 mb-1">Prioridade</label>
+                  <label
+                    htmlFor="mod-priority"
+                    className="block text-xs font-semibold text-amber-800 mb-1"
+                  >
+                    Prioridade
+                  </label>
                   <select
+                    id="mod-priority"
                     value={modPriority}
                     onChange={(e) => setModPriority(e.target.value as any)}
                     className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-amber-500 outline-hidden"
@@ -211,8 +277,14 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-amber-800 mb-1">Parecer / Nota Oficial para o Cidadão</label>
+                <label
+                  htmlFor="mod-notes"
+                  className="block text-xs font-semibold text-amber-800 mb-1"
+                >
+                  Parecer / Nota Oficial para o Cidadão
+                </label>
                 <input
+                  id="mod-notes"
                   type="text"
                   placeholder="Ex: Equipe de zeladoria agendada para 18/08..."
                   value={modNotes}
@@ -269,7 +341,12 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
                       <span className="font-bold text-slate-700">
                         {c.user_name || 'Morador'} {c.is_official_response && '⭐ Resposta Oficial'}
                       </span>
-                      <span>{new Date(c.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span>
+                        {new Date(c.created_at).toLocaleTimeString('pt-BR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
                     </div>
                     <p>{c.content}</p>
                   </div>
@@ -285,6 +362,7 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
             <form onSubmit={handleCommentSubmit} className="flex gap-2 pt-2">
               <input
                 type="text"
+                aria-label="Escrever um comentário"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Escreva um comentário ou confirmação..."
@@ -292,6 +370,7 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
               />
               <button
                 type="submit"
+                aria-label="Enviar comentário"
                 disabled={!commentText.trim()}
                 className="bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white p-2 rounded-xl text-xs font-semibold flex items-center justify-center transition-colors"
               >
@@ -299,9 +378,7 @@ export const IncidentDetailModal: React.FC<IncidentDetailModalProps> = ({
               </button>
             </form>
           </div>
-
         </div>
-
       </div>
     </div>
   );

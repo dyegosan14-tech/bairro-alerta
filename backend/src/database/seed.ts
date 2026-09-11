@@ -3,8 +3,21 @@ import { fileURLToPath } from 'url';
 import { pool, query } from './pool.js';
 import { logger } from '../config/logger.js';
 import { runMigrations } from './migrate.js';
+import { env } from '../config/env.js';
 
 export async function runSeed() {
+  // Trava de segurança: o seed apaga TODAS as tabelas (TRUNCATE ... CASCADE) antes de
+  // repopular. Rodar isso contra um banco de produção destruiria dados reais de forma
+  // irreversível. Só prossegue em produção se o operador confirmar explicitamente via
+  // ALLOW_PRODUCTION_SEED=true.
+  if (env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
+    logger.error(
+      '❌ Seed bloqueado: NODE_ENV=production apagaria todos os dados reais (TRUNCATE CASCADE). ' +
+        'Defina ALLOW_PRODUCTION_SEED=true explicitamente se tiver certeza absoluta do que está fazendo.'
+    );
+    throw new Error('Seed bloqueado em produção por segurança.');
+  }
+
   logger.info('🌱 Populando o banco de dados com dados iniciais e ocorrências geoespaciais...');
 
   try {
@@ -21,53 +34,110 @@ export async function runSeed() {
     const passMod = await bcrypt.hash('Mod@123', salt);
     const passCitizen = await bcrypt.hash('Cidadao@123', salt);
 
-    const userAdminRes = await query(`
+    const userAdminRes = await query(
+      `
       INSERT INTO users (name, email, password_hash, role, neighborhood, city)
       VALUES ('Administrador Geral', 'admin@vozdebairro.com.br', $1, 'ADMIN', 'Centro', 'São Paulo')
       RETURNING id;
-    `, [passAdmin]);
+    `,
+      [passAdmin]
+    );
     const adminId = userAdminRes.rows[0].id;
 
-    const userModRes = await query(`
+    const userModRes = await query(
+      `
       INSERT INTO users (name, email, password_hash, role, neighborhood, city)
       VALUES ('Lucas Moderador', 'moderador@vozdebairro.com.br', $1, 'MODERATOR', 'Pinheiros', 'São Paulo')
       RETURNING id;
-    `, [passMod]);
+    `,
+      [passMod]
+    );
     const modId = userModRes.rows[0].id;
 
-    const userCitizenRes = await query(`
+    const userCitizenRes = await query(
+      `
       INSERT INTO users (name, email, password_hash, role, neighborhood, city)
       VALUES ('Carlos Cidadão', 'cidadao@vozdebairro.com.br', $1, 'CITIZEN', 'Vila Mariana', 'São Paulo')
       RETURNING id;
-    `, [passCitizen]);
+    `,
+      [passCitizen]
+    );
     const citizenId = userCitizenRes.rows[0].id;
 
-    const userCitizen2Res = await query(`
+    const userCitizen2Res = await query(
+      `
       INSERT INTO users (name, email, password_hash, role, neighborhood, city)
       VALUES ('Maria Silva', 'maria.silva@exemplo.com.br', $1, 'CITIZEN', 'Bela Vista', 'São Paulo')
       RETURNING id;
-    `, [passCitizen]);
+    `,
+      [passCitizen]
+    );
     const citizen2Id = userCitizen2Res.rows[0].id;
 
     // 3. Criar Categorias Urbanas
     const categories = [
-      { name: 'Iluminação Pública', slug: 'iluminacao-publica', icon: 'Lightbulb', color: '#EAB308', desc: 'Postes apagados, lâmpadas queimadas ou fiação exposta' },
-      { name: 'Buracos e Pavimentação', slug: 'buracos-pavimentacao', icon: 'AlertTriangle', color: '#EF4444', desc: 'Crateras na pista, asfalto cedendo ou calçadas danificadas' },
-      { name: 'Lixo e Entulho', slug: 'lixo-entulho', icon: 'Trash2', color: '#10B981', desc: 'Descarte clandestino de lixo, móveis velhos e entulhos de obras' },
-      { name: 'Focos de Dengue', slug: 'focos-dengue', icon: 'Bug', color: '#8B5CF6', desc: 'Água parada, terrenos abandonados e possíveis criadouros do Aedes' },
-      { name: 'Sinalização e Trânsito', slug: 'sinalizacao-transito', icon: 'ShieldAlert', color: '#F97316', desc: 'Semáforos apagados, placas encobertas ou faixas apagadas' },
-      { name: 'Árvores e Praças', slug: 'arvores-pracas', icon: 'Trees', color: '#14B8A6', desc: 'Galhos em risco de queda, árvores sobre fios ou mato alto em praças' },
-      { name: 'Água e Saneamento', slug: 'agua-saneamento', icon: 'Droplets', color: '#06B6D4', desc: 'Vazamentos de água potável ou esgoto a céu aberto' },
+      {
+        name: 'Iluminação Pública',
+        slug: 'iluminacao-publica',
+        icon: 'Lightbulb',
+        color: '#EAB308',
+        desc: 'Postes apagados, lâmpadas queimadas ou fiação exposta',
+      },
+      {
+        name: 'Buracos e Pavimentação',
+        slug: 'buracos-pavimentacao',
+        icon: 'AlertTriangle',
+        color: '#EF4444',
+        desc: 'Crateras na pista, asfalto cedendo ou calçadas danificadas',
+      },
+      {
+        name: 'Lixo e Entulho',
+        slug: 'lixo-entulho',
+        icon: 'Trash2',
+        color: '#10B981',
+        desc: 'Descarte clandestino de lixo, móveis velhos e entulhos de obras',
+      },
+      {
+        name: 'Focos de Dengue',
+        slug: 'focos-dengue',
+        icon: 'Bug',
+        color: '#8B5CF6',
+        desc: 'Água parada, terrenos abandonados e possíveis criadouros do Aedes',
+      },
+      {
+        name: 'Sinalização e Trânsito',
+        slug: 'sinalizacao-transito',
+        icon: 'ShieldAlert',
+        color: '#F97316',
+        desc: 'Semáforos apagados, placas encobertas ou faixas apagadas',
+      },
+      {
+        name: 'Árvores e Praças',
+        slug: 'arvores-pracas',
+        icon: 'Trees',
+        color: '#14B8A6',
+        desc: 'Galhos em risco de queda, árvores sobre fios ou mato alto em praças',
+      },
+      {
+        name: 'Água e Saneamento',
+        slug: 'agua-saneamento',
+        icon: 'Droplets',
+        color: '#06B6D4',
+        desc: 'Vazamentos de água potável ou esgoto a céu aberto',
+      },
     ];
 
     const categoryMap = new Map<string, string>();
 
     for (const cat of categories) {
-      const res = await query(`
+      const res = await query(
+        `
         INSERT INTO categories (name, slug, description, icon, color_hex)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id;
-      `, [cat.name, cat.slug, cat.desc, cat.icon, cat.color]);
+      `,
+        [cat.name, cat.slug, cat.desc, cat.icon, cat.color]
+      );
       categoryMap.set(cat.slug, res.rows[0].id);
     }
 
@@ -139,7 +209,7 @@ export async function runSeed() {
         title: 'Semáforo de pedestres quebrado em frente à escola',
         desc: 'O botão de travessia está solto e o sinal não fica vermelho para os veículos, pondo crianças em perigo.',
         lat: -23.5833,
-        lng: -46.6800,
+        lng: -46.68,
         address: 'Rua Tabapuã, 410',
         neighborhood: 'Itaim Bibi',
         status: 'RESOLVED',
@@ -153,8 +223,8 @@ export async function runSeed() {
         categorySlug: 'arvores-pracas',
         title: 'Galho de grande porte apoiado sobre fiação de média tensão',
         desc: 'Após a tempestade de ontem, o galho cedeu e está tensionando os cabos elétricos.',
-        lat: -23.5350,
-        lng: -46.6720,
+        lat: -23.535,
+        lng: -46.672,
         address: 'Rua Monte Alegre, 980',
         neighborhood: 'Perdizes',
         status: 'IN_PROGRESS',
@@ -169,7 +239,8 @@ export async function runSeed() {
       const catId = categoryMap.get(inc.categorySlug);
       if (!catId) continue;
 
-      const incRes = await query(`
+      const incRes = await query(
+        `
         INSERT INTO incidents (
           user_id, category_id, title, description,
           location, address_text, neighborhood, city, state,
@@ -184,32 +255,49 @@ export async function runSeed() {
           CASE WHEN $9 != 'PENDING' THEN CURRENT_TIMESTAMP ELSE NULL END,
           CASE WHEN $9 = 'RESOLVED' THEN CURRENT_TIMESTAMP ELSE NULL END
         ) RETURNING id;
-      `, [
-        inc.userId, catId, inc.title, inc.desc,
-        inc.lng, inc.lat, // PostGIS ST_MakePoint recebe (longitude, latitude)
-        inc.address, inc.neighborhood,
-        inc.status, inc.priority, inc.upvotes, inc.notes,
-        inc.status !== 'PENDING' ? modId : null
-      ]);
+      `,
+        [
+          inc.userId,
+          catId,
+          inc.title,
+          inc.desc,
+          inc.lng,
+          inc.lat, // PostGIS ST_MakePoint recebe (longitude, latitude)
+          inc.address,
+          inc.neighborhood,
+          inc.status,
+          inc.priority,
+          inc.upvotes,
+          inc.notes,
+          inc.status !== 'PENDING' ? modId : null,
+        ]
+      );
 
       const incidentId = incRes.rows[0].id;
 
       // Adicionar imagem
-      await query(`
+      await query(
+        `
         INSERT INTO incident_images (incident_id, file_url, original_name, mime_type, file_size_bytes)
         VALUES ($1, $2, 'reporte_foto.jpg', 'image/jpeg', 1048576);
-      `, [incidentId, inc.img]);
+      `,
+        [incidentId, inc.img]
+      );
 
       // Adicionar comentário exemplo
       if (inc.status === 'IN_PROGRESS' || inc.status === 'RESOLVED') {
-        await query(`
+        await query(
+          `
           INSERT INTO incident_comments (incident_id, user_id, content, is_official_response)
           VALUES ($1, $2, 'Equipe técnica foi mobilizada e está no local atendendo a solicitação.', true);
-        `, [incidentId, modId]);
+        `,
+          [incidentId, modId]
+        );
       }
 
       // Adicionar log de auditoria
-      await query(`
+      await query(
+        `
         INSERT INTO audit_logs (actor_id, actor_email, actor_role, action, entity_type, entity_id, old_values, new_values, ip_address)
         VALUES (
           $1, 'moderador@vozdebairro.com.br', 'MODERATOR',
@@ -217,7 +305,9 @@ export async function runSeed() {
           '{"status": "PENDING"}', json_build_object('status', $3::text, 'priority', $4::text),
           '192.168.1.50'
         );
-      `, [modId, incidentId, inc.status, inc.priority]);
+      `,
+        [modId, incidentId, inc.status, inc.priority]
+      );
     }
 
     logger.info('🎉 Base de dados populada com sucesso!');
@@ -225,7 +315,6 @@ export async function runSeed() {
     logger.info('   👉 ADMIN:     admin@vozdebairro.com.br     | Senha: Admin@123');
     logger.info('   👉 MODERADOR: moderador@vozdebairro.com.br | Senha: Mod@123');
     logger.info('   👉 CIDADÃO:   cidadao@vozdebairro.com.br   | Senha: Cidadao@123');
-
   } catch (error) {
     logger.error({ error }, '❌ Erro ao popular banco de dados');
     throw error;

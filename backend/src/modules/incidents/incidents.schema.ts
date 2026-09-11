@@ -19,14 +19,14 @@ export const listIncidentsQuerySchema = z.object({
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
   radius_km: z.coerce.number().positive().max(100).optional(), // Raio em km
-  
+
   // Filtros convencionais
   status: z.enum(['PENDING', 'APPROVED', 'IN_PROGRESS', 'RESOLVED', 'REJECTED', 'ALL']).optional(),
   category_id: z.string().uuid().optional(),
   neighborhood: z.string().optional(),
   search: z.string().optional(),
   user_id: z.string().uuid().optional(),
-  
+
   // Paginação
   limit: z.coerce.number().min(1).max(100).default(50),
   offset: z.coerce.number().min(0).default(0),

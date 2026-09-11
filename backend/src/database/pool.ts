@@ -9,6 +9,11 @@ export const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
+  // Evita que uma query custosa (ex.: raio geoespacial grande, ILIKE sem índice) prenda
+  // uma conexão indefinidamente e esgote o pool.
+  statement_timeout: 15000,
+  query_timeout: 15000,
+  idle_in_transaction_session_timeout: 30000,
 });
 
 pool.on('error', (err) => {
@@ -18,7 +23,10 @@ pool.on('error', (err) => {
 /**
  * Executa uma query no PostgreSQL. Se falhar por falta de conexão, loga aviso.
  */
-export async function query<T extends pg.QueryResultRow = any>(text: string, params?: any[]): Promise<pg.QueryResult<T>> {
+export async function query<T extends pg.QueryResultRow = any>(
+  text: string,
+  params?: any[]
+): Promise<pg.QueryResult<T>> {
   const start = Date.now();
   try {
     const res = await pool.query<T>(text, params);
@@ -34,15 +42,41 @@ export async function query<T extends pg.QueryResultRow = any>(text: string, par
 }
 
 /**
+ * Executa uma sequência de operações dentro de uma única transação (BEGIN/COMMIT),
+ * com ROLLBACK automático em caso de erro. Use para qualquer operação composta por
+ * mais de um INSERT/UPDATE que precise ser tudo-ou-nada.
+ */
+export async function withTransaction<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await fn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Testa e verifica a conectividade com o PostgreSQL e PostGIS
  */
 export async function testDbConnection(): Promise<boolean> {
   try {
     const res = await pool.query('SELECT postgis_full_version() AS postgis_version;');
-    logger.info({ version: res.rows[0]?.postgis_version }, '🐘 PostgreSQL + PostGIS conectado com sucesso!');
+    logger.info(
+      { version: res.rows[0]?.postgis_version },
+      '🐘 PostgreSQL + PostGIS conectado com sucesso!'
+    );
     return true;
   } catch (err: any) {
-    logger.warn({ message: err.message }, '⚠️ Não foi possível conectar ao PostgreSQL/PostGIS. Verifique o Docker Compose ou a DATABASE_URL.');
+    logger.warn(
+      { message: err.message },
+      '⚠️ Não foi possível conectar ao PostgreSQL/PostGIS. Verifique o Docker Compose ou a DATABASE_URL.'
+    );
     return false;
   }
 }

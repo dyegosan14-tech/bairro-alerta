@@ -13,6 +13,7 @@ import fs from 'fs';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { errorHandler } from './middlewares/error-handler.middleware.js';
+import { parseCorsOrigin } from './utils/cors.js';
 
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { usersRoutes } from './modules/users/users.routes.js';
@@ -37,14 +38,20 @@ export async function buildApp(): Promise<FastifyInstance> {
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   });
 
-  // 3. CORS
+  // 3. CORS (origem controlada pela variável CORS_ORIGIN; nunca reflete '*' com credenciais)
   await app.register(cors, {
-    origin: true,
+    ...parseCorsOrigin(env.CORS_ORIGIN),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    credentials: true,
   });
 
   // 4. Rate Limiting Global
+  // ATENÇÃO ao escalar horizontalmente: por padrão o @fastify/rate-limit guarda os
+  // contadores em memória do próprio processo. Com múltiplas réplicas do backend atrás de
+  // um load balancer, cada instância passa a ter seu próprio contador independente — o
+  // limite efetivo vira (RATE_LIMIT_MAX × número de réplicas), não o valor configurado.
+  // O docker-compose.yml atual só sobe uma réplica, então isso não é um problema hoje; se
+  // isso mudar, passe um client Redis (ioredis) na opção `redis` abaixo — não adicionamos
+  // essa dependência agora por não haver necessidade real nem como testá-la neste projeto.
   await app.register(rateLimit, {
     max: env.RATE_LIMIT_MAX,
     timeWindow: env.RATE_LIMIT_TIME_WINDOW,
@@ -81,7 +88,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     openapi: {
       info: {
         title: 'Voz do Bairro API',
-        description: 'API Geoespacial de Zeladoria Urbana e Alertas Comunitários com PostGIS e Fastify',
+        description:
+          'API Geoespacial de Zeladoria Urbana e Alertas Comunitários com PostGIS e Fastify',
         version: '1.0.0',
       },
       servers: [

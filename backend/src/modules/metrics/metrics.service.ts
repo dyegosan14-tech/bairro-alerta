@@ -32,8 +32,34 @@ export interface DashboardMetrics {
   }>;
 }
 
+// Cache em memória do processo com TTL curto: o dashboard executa 5 agregações que
+// varrem a tabela de incidents inteira a cada chamada, num endpoint público e sem
+// autenticação — o alvo mais óbvio de tráfego repetido. Um TTL de alguns segundos já
+// elimina a maior parte da carga redundante sem deixar os números perceptivelmente
+// desatualizados. Isso não substitui um cache compartilhado (Redis) se o backend rodar
+// com múltiplas réplicas — cada instância teria seu próprio cache local, o que é
+// aceitável aqui pois o pior caso é só recalcular um pouco mais vezes, nunca servir dados
+// de outro tenant/usuário.
+const DASHBOARD_CACHE_TTL_MS = 30_000;
+let cachedMetrics: { data: DashboardMetrics; expiresAt: number } | null = null;
+
 export class MetricsService {
-  static async getDashboardMetrics(): Promise<DashboardMetrics> {
+  static async getDashboardMetrics(now: number = Date.now()): Promise<DashboardMetrics> {
+    if (cachedMetrics && cachedMetrics.expiresAt > now) {
+      return cachedMetrics.data;
+    }
+
+    const data = await this.computeDashboardMetrics();
+    cachedMetrics = { data, expiresAt: now + DASHBOARD_CACHE_TTL_MS };
+    return data;
+  }
+
+  /** Limpa o cache — útil em testes e após operações que mudam os números do dashboard. */
+  static invalidateCache(): void {
+    cachedMetrics = null;
+  }
+
+  private static async computeDashboardMetrics(): Promise<DashboardMetrics> {
     // 1. Resumo Geral
     const summaryRes = await query(`
       SELECT 
@@ -108,7 +134,8 @@ export class MetricsService {
         rejected_count: parseInt(summaryRow.rejected_count || '0', 10),
         resolution_rate_percentage: resolutionRate,
         total_upvotes: parseInt(summaryRow.total_upvotes || '0', 10),
-        avg_resolution_hours: Math.round(parseFloat(summaryRow.avg_resolution_hours || '0') * 10) / 10,
+        avg_resolution_hours:
+          Math.round(parseFloat(summaryRow.avg_resolution_hours || '0') * 10) / 10,
       },
       by_category: categoryRes.rows,
       by_status: statusRes.rows,
