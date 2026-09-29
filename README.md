@@ -243,3 +243,12 @@ voz-do-bairro/
 ## 📄 Licença & Direitos Autorais
  
 Projeto sob **Licença Proprietária / Direitos Autorais Reservados**. Consulte o arquivo [LICENSE](LICENSE) para os termos completos de uso e titularidade.
+
+
+---
+
+## 👨‍💻 Autor
+
+Desenvolvido por **Dyego Assis** ([@dyegosan14-tech](https://github.com/dyegosan14-tech)).
+
+[![GitHub Profile](https://img.shields.io/badge/GitHub-dyegosan14--tech-181717?style=for-the-badge&logo=github)](https://github.com/dyegosan14-tech)
